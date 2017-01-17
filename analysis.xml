@@ -1,0 +1,93 @@
+<container>
+	<properties url="classpath:/default/settings.properties" />
+    <property name="infile" value="src/main/resources/testDataFile.fits.gz" />
+    <property name="drsfile" value="" />
+    <property name="output" value="/some/folder/foo.jsonl.gz" />
+    <property name="auxFolder" value="" />
+
+    <property name="integralGainFile" value="classpath:/default/gain_sorted_20131127.csv" />
+    <property name="pixelDelayFile" value="classpath:/default/delays_lightpulser_20150217.csv" />
+    <service id="auxService" class="fact.auxservice.AuxFileService" auxFolder="${auxFolder}" />
+    <service id="calibService" class="fact.calibrationservice.ConstantCalibService" />
+    <stream id="fact" class="fact.io.zfits.ZFitsStream"  url="file:${infile}"/>
+
+    <process id="42" input="fact">
+        <include url="classpath:/default/data/prevEventAndSkip.xml" />
+        <include url="classpath:/default/data/calibration.xml" />
+        <include url="classpath:/default/data/extraction.xml" />
+
+        <fact.extraction.SinglePulseExtraction
+                dataKey="DataCalibrated"
+                outputKey="PhotonArrivals"
+        />
+
+        <include url="classpath:/default/data/cleaning.xml" />
+        <include url="classpath:/default/data/pedestalParameters.xml" />
+        <include url="classpath:/default/data/parameterCalc.xml" />
+        <include url="classpath:/default/data/sourceParameter.xml" />
+        <fact.io.JSONWriter keys="${keysForOutput}"
+                            url="file:${output}_std.jsonl.gz"
+                            writeListOfItems="True"
+                            pixelSetsAsInt="True"
+                            jsonl="True"
+                            gzip="True"
+
+        />
+
+
+        <fact.utils.ConvertSinglePulses2Timeseries
+                singlePulsesKey="PhotonArrivals"
+                baseLineKey="PhotonArrivalsBaseLine"
+                timeSeriesKey="DataCalibrated"
+        />
+        <include url="classpath:/default/data/extraction.xml" />
+        <include url="classpath:/default/data/cleaning.xml" />
+        <include url="classpath:/default/data/parameterCalc.xml" />
+        <include url="classpath:/default/data/sourceParameter.xml" />
+        <fact.io.JSONWriter keys="${keysForOutput}"
+                            url="file:${output}_reco.jsonl.gz"
+                            writeListOfItems="True"
+                            pixelSetsAsInt="True"
+                            jsonl="True"
+                            gzip="True"
+        />
+
+
+        <fact.utils.PhotonStream2ArrivalTime
+            singlePulsesKey="PhotonArrivals"
+            arrivalTimeKey="arrivalTime"
+        />
+        <fact.utils.PhotonStream2NumberOfPhotons
+            singlePulsesKey="PhotonArrivals"
+            arrivalTimeKey="arrivalTime"
+            numberOfPhotonsKey="photoncharge"
+        />
+        <fact.datacorrection.CorrectPixelDelays
+            arrivalTimeKey="arrivalTime"
+            outputKey="arrivalTime"
+            url="${pixelDelayFile}"
+        />
+        <fact.datacorrection.InterpolatePhotondata
+            calibService="calibService"
+            photonChargeKey="photoncharge"
+            photonChargeOutputKey="photoncharge"
+            arrivalTimeKey="arrivalTime"
+            arrivalTimeOutputKey="arrivalTime"
+        />
+        <include url="classpath:/default/data/cleaning.xml" />
+        <include url="classpath:/default/data/parameterCalc.xml" />
+        <include url="classpath:/default/data/sourceParameter.xml" />
+
+        <fact.io.JSONWriter keys="${keysForOutput}"
+                            url="file:${output}_phs.jsonl.gz"
+                            writeListOfItems="True"
+                            pixelSetsAsInt="True"
+                            jsonl="True"
+                            gzip="True"
+
+        />
+
+
+
+    </process>
+</container>
