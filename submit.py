@@ -126,7 +126,9 @@ def security_check(args):
             print("Exiting...")
             sys.exit(0)
 
-
+def make_dirs(paths):
+    for p in paths.values():
+        os.makedirs(os.path.dirname(p), exist_ok=True)
 
 if __name__ == "__main__":
     arguments = docopt(__doc__, version='Submitter 1.0')
@@ -191,5 +193,6 @@ if __name__ == "__main__":
         if arguments["--print"]:
             print(cmd)
         else:
+            make_dirs(paths)
             sp.check_output(shlex.split(cmd))
 
