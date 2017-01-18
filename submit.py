@@ -140,10 +140,10 @@ if __name__ == "__main__":
         "jar_path": os.path.join(this_path, jar_file_name),
         "xml_path": os.path.join(this_path, "analysis.xml"),
         "worker_node_script_path": os.path.join(this_path, "workernode.sh"),
-        "outdir": os.path.join(this_path, "json/{y:04d}/{m:02d}/{d:02}"),
+        "outdir": os.path.join(this_path, "out/"),
         "basename": "{base_name}",
-        "stdout_path": os.path.join(this_path, "out/{y:04d}/{m:02d}/{d:02}/{base_name}.txt"),
-        "stderr_path": os.path.join(this_path, "err/{y:04d}/{m:02d}/{d:02}/{base_name}.txt"),
+        "stdout_path": os.path.join(this_path, "out/{base_name}.o"),
+        "stderr_path": os.path.join(this_path, "out/{base_name}.e"),
         "drsfile":"{infile_base_path}/{night_int:08d}_{drs_run:03d}.drs.fits.gz",
         "aux_dir": "/fact/aux/{y:04d}/{m:02d}/{d:02d}/",
         "infile_path": "{infile_path}",
@@ -172,10 +172,13 @@ if __name__ == "__main__":
 
         paths = {n:p.format(**info) for (n,p) in path_templates.items()}
 
+        os.makedirs(os.path.join(this_path, "out"), exist_ok=True)
         cmd = ("qsub "
-                "-q fact_short "
+                "-q fact_medium "
                 "-o {stdout_path} "
                 "-e {stderr_path} "
+                "-m ae "
+                "-M neised@phys.ethz.ch "
                 "-v "
                 "jar_path={jar_path},"
                 "xml_path={xml_path},"
@@ -190,7 +193,5 @@ if __name__ == "__main__":
         if arguments["--print"]:
             print(cmd)
         else:
-            os.makedirs(paths['stdout_path'], exist_ok=True)
-            os.makedirs(paths['stderr_path'], exist_ok=True)
             sp.check_output(shlex.split(cmd))
 
