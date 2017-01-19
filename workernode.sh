@@ -6,7 +6,14 @@ echo "JOB_ID: $JOB_ID"
 echo "JOB_NAME: $JOB_NAME"
 echo "HOSTNAME: $HOSTNAME"
 
-export temp_dir=/tmp/dneise_facttools_$JOB_ID
+export temp_dir_base=/tmp/dneise_facttools_
+export temp_dir=$temp_dir_base$JOB_ID
+
+# delete folders like temp_dir_base with a number smaller than 
+
+find . -name "$temp_dir_base*" | while read file; do 
+  [ "${file#$temp_dir_base}" -lt 4434318 ] && rm -rfv "$file" 
+  done
 
 echo "java \
    -XX:MaxHeapSize=1024m \
